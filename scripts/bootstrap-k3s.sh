@@ -4,6 +4,7 @@ set -euo pipefail
 
 K3S_CONFIG=/etc/rancher/k3s/k3s.yaml
 UBUNTU_HOME="$(getent passwd ubuntu | cut -d: -f6)"
+KUBECONFIG_LINE='export KUBECONFIG=$HOME/.kube/config'
 
 if [[ -z "${UBUNTU_HOME}" ]]; then
   echo "The ubuntu user does not exist." >&2
@@ -20,8 +21,19 @@ sudo systemctl enable k3s
 sudo systemctl is-active --quiet k3s
 sudo systemctl --no-pager status k3s
 
-sudo install -d -m 0700 -o ubuntu -g ubuntu "${UBUNTU_HOME}/.kube"
-sudo install -m 0600 -o ubuntu -g ubuntu "${K3S_CONFIG}" "${UBUNTU_HOME}/.kube/config"
+UBUNTU_UID="$(id -u ubuntu)"
+UBUNTU_GID="$(id -g ubuntu)"
+UBUNTU_KUBECONFIG="${UBUNTU_HOME}/.kube/config"
+UBUNTU_BASHRC="${UBUNTU_HOME}/.bashrc"
 
-sudo -u ubuntu env KUBECONFIG="${UBUNTU_HOME}/.kube/config" kubectl get nodes
-sudo -u ubuntu env KUBECONFIG="${UBUNTU_HOME}/.kube/config" kubectl get pods -A
+sudo install -d -m 0700 -o "${UBUNTU_UID}" -g "${UBUNTU_GID}" "${UBUNTU_HOME}/.kube"
+sudo install -m 0600 -o "${UBUNTU_UID}" -g "${UBUNTU_GID}" "${K3S_CONFIG}" "${UBUNTU_KUBECONFIG}"
+
+sudo -u ubuntu touch "${UBUNTU_BASHRC}"
+if ! sudo -u ubuntu grep -Fqx "${KUBECONFIG_LINE}" "${UBUNTU_BASHRC}"; then
+  printf '\n%s\n' "${KUBECONFIG_LINE}" | sudo tee -a "${UBUNTU_BASHRC}" >/dev/null
+fi
+
+export KUBECONFIG="${UBUNTU_KUBECONFIG}"
+sudo -u ubuntu env HOME="${UBUNTU_HOME}" KUBECONFIG="${KUBECONFIG}" kubectl get nodes
+sudo -u ubuntu env HOME="${UBUNTU_HOME}" KUBECONFIG="${KUBECONFIG}" kubectl get pods -A
