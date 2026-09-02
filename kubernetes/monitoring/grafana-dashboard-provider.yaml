@@ -1,0 +1,21 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: grafana-dashboard-provider
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: grafana
+    app.kubernetes.io/part-of: ec2-gitops-project
+data:
+  dashboards.yaml: |
+    apiVersion: 1
+    providers:
+      - name: EC2 GitOps
+        orgId: 1
+        folder: EC2 GitOps
+        type: file
+        disableDeletion: true
+        editable: false
+        updateIntervalSeconds: 30
+        options:
+          path: /var/lib/grafana/dashboards
