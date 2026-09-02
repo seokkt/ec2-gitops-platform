@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: demo-api
+  namespace: demo
+  labels:
+    app: demo-api
+    app.kubernetes.io/name: demo-api
+    app.kubernetes.io/part-of: ec2-gitops-project
+spec:
+  type: ClusterIP
+  selector:
+    app: demo-api
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8000
+      protocol: TCP
