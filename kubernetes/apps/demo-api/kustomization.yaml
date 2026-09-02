@@ -7,4 +7,4 @@ resources:
   - ingress.yaml
 images:
   - name: ghcr.io/seokkt/ec2-gitops-app
-    newTag: ffc6184
+    newTag: b956532
